@@ -16,8 +16,12 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,7 +36,65 @@ public class FlightAggregationService {
     @Autowired
     private FlightClientFromProviderB providerBClient;
 
-    public List<Flight> searchFlights(SearchFlightRequest request) {
+    public List<Flight> searchFlightsNormal(SearchFlightRequest request) {
+        Pattern pattern = Pattern.compile("^" + request.getFlightNo());
+
+        Map<String, List<Flight>> allFlightsMap = getAllFlights(request);
+        List<Flight> allFlights = new ArrayList<>();
+
+        for (Map.Entry<String, List<Flight>> entry : allFlightsMap.entrySet()) {
+            allFlights.addAll(entry.getValue());
+        }
+
+        List<Flight> searchedFlights = new ArrayList<>();
+        for (Flight f : allFlights) {
+            Matcher matcher = pattern.matcher(f.getFlightNumber());
+            while (matcher.find()) {
+                searchedFlights.add(f);
+            }
+        }
+        return searchedFlights;
+    }
+
+    public List<Flight> searchFlightsCheapest(SearchFlightRequest request) {
+        Pattern pattern = Pattern.compile("^" + request.getFlightNo());
+
+        Map<String, List<Flight>> allFlightsMap = getAllFlights(request);
+
+        Map<String, List<Flight>> necessaryFlights = new HashMap<>();
+
+        for (Map.Entry<String, List<Flight>> entry : allFlightsMap.entrySet()) {
+            for (Flight flight : entry.getValue()) {
+                String flightNo = flight.getFlightNumber();
+                Matcher matcher = pattern.matcher(flightNo);
+                while (matcher.find()) {
+                    necessaryFlights.computeIfAbsent(entry.getKey(), k -> new ArrayList<>());
+                    necessaryFlights.get(entry.getKey()).add(flight);
+                }
+            }
+        }
+        return findCheapestFlights(necessaryFlights);
+    }
+
+    public List<Flight> findCheapestFlights(Map<String, List<Flight>> allFlightsMap) {
+        List<Flight> cheapestFlights = new ArrayList<>();
+        Map<String, Flight> cheapestByFlightNo = new HashMap<>();
+
+        for (Map.Entry<String, List<Flight>> entry : allFlightsMap.entrySet()) {
+            for (Flight flight : entry.getValue()) {
+                String flightNo = flight.getFlightNumber();
+                Flight current = cheapestByFlightNo.get(flightNo);
+                if (current == null || flight.getPrice().compareTo(current.getPrice()) < 0) {
+                    cheapestByFlightNo.put(flightNo, flight);
+                }
+            }
+        }
+
+        cheapestFlights.addAll(cheapestByFlightNo.values());
+        return cheapestFlights;
+    }
+
+    public Map<String, List<Flight>> getAllFlights(SearchFlightRequest request) {
         logger.info("Searching flights from {} to {} on {}",
                 request.getDeparture(),
                 request.getArrival(),
@@ -84,62 +146,14 @@ public class FlightAggregationService {
 
         // Wait for both to complete and combine results
         try {
-            List<Flight> allFlights = new ArrayList<>();
-            allFlights.addAll(futureA.get());
-            allFlights.addAll(futureB.get());
-
-            logger.info("Total flights found: {}", allFlights.size());
-
-            // Sort by price
-            return allFlights.stream()
-                    .sorted((f1, f2) -> f1.getPrice().compareTo(f2.getPrice()))
-                    .collect(Collectors.toList());
+            Map<String, List<Flight>> allFlights = new HashMap<>();
+            allFlights.put("providerA", futureA.get());
+            allFlights.put("providerB", futureB.get());
+            return allFlights;
         } catch (Exception e) {
             logger.error("Error aggregating flight results", e);
-            return new ArrayList<>();
+            return new HashMap<>();
         }
-    }
-
-    private List<FlightDTO> convertProviderAFlights(
-            List<Flight> flights) {
-        return flights.stream()
-                .map(f -> {
-                    FlightDTO dto = new FlightDTO();
-                    dto.setFlightNumber(f.getFlightNumber());
-                    dto.setDeparture(f.getDeparture());
-                    dto.setArrival(f.getArrival());
-                    if (f.getDeparturedatetime() != null) {
-                        dto.setDepartureDateTime(f.getDeparturedatetime().toString());
-                    }
-                    if (f.getArrivaldatetime() != null) {
-                        dto.setArrivalDateTime(f.getArrivaldatetime().toString());
-                    }
-                    dto.setPrice(f.getPrice());
-                    dto.setProvider("Provider A");
-                    return dto;
-                })
-                .collect(Collectors.toList());
-    }
-
-    private List<FlightDTO> convertProviderBFlights(
-            List<Flight> flights) {
-        return flights.stream()
-                .map(f -> {
-                    FlightDTO dto = new FlightDTO();
-                    dto.setFlightNumber(f.getFlightNumber());
-                    dto.setDeparture(f.getDeparture());
-                    dto.setArrival(f.getArrival());
-                    if (f.getDeparturedatetime() != null) {
-                        dto.setDepartureDateTime(f.getDeparturedatetime().toString());
-                    }
-                    if (f.getArrivaldatetime() != null) {
-                        dto.setArrivalDateTime(f.getArrivaldatetime().toString());
-                    }
-                    dto.setPrice(f.getPrice());
-                    dto.setProvider("Provider B");
-                    return dto;
-                })
-                .collect(Collectors.toList());
     }
 
     private String formatDateTime(LocalDateTime dateTime) {

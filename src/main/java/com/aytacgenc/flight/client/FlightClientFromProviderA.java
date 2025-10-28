@@ -1,8 +1,10 @@
 package com.aytacgenc.flight.client;
 
 import com.aytacgenc.flight.config.SoapClientConfig;
+import com.aytacgenc.flight.dto.LogDTO;
 import com.aytacgenc.flight.dto.SearchFlightRequestA;
 import com.aytacgenc.flight.helper.DateTimeConverter;
+import com.aytacgenc.flight.service.LogService;
 import com.providerB.consumingwebservice.wsdl.Flight;
 import com.providerA.consumingwebservice.wsdl.SearchRequest;
 import jakarta.xml.bind.JAXBElement;
@@ -23,10 +25,12 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +39,9 @@ public class FlightClientFromProviderA extends WebServiceGatewaySupport {
 
     @Autowired
     private SoapClientConfig config;
+
+    @Autowired
+    private LogService logService;
 
     public List<Flight> getFlightsFromProviderA(SearchRequest searchRequest) throws Exception {
         QName qName = new QName("http://flightprovidera.service.com", "AvailabilitySearchRequest");
@@ -48,7 +55,20 @@ public class FlightClientFromProviderA extends WebServiceGatewaySupport {
                     @Override
                     public void doWithMessage(WebServiceMessage message) throws IOException {
                         ((SoapMessage) message).setSoapAction("http://flightprovidera.service.com/AvailabilitySearchRequest");
+                        // marshal payload into the message
                         getWebServiceTemplate().getMarshaller().marshal(jaxbElementNew, message.getPayloadResult());
+
+                        // capture the outgoing SOAP request as String
+                        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                            message.writeTo(baos);
+                            baos.flush(); // Ensure all data is written
+                            String soapRequestXml = baos.toString(StandardCharsets.UTF_8.name());
+                            // save log
+                            LogDTO logRequest = new LogDTO("request", soapRequestXml, "http://flightprovidera.service.com");
+                            logService.saveLog(logRequest);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 },
                 new WebServiceMessageExtractor<String>() {
@@ -64,7 +84,8 @@ public class FlightClientFromProviderA extends WebServiceGatewaySupport {
                 }
         );
 
-        System.out.println("Raw SOAP response: " + rawResponse);
+        LogDTO logDTOResponse = new LogDTO("response", rawResponse, "http://flightprovidera.service.com");
+        logService.saveLog(logDTOResponse);
 
         // Parse the response
         return parseFlightsFromXml(rawResponse);
@@ -114,7 +135,7 @@ public class FlightClientFromProviderA extends WebServiceGatewaySupport {
 
             if (priceText != null && !priceText.isEmpty()) {
                 try {
-                         flight.setPrice(BigDecimal.valueOf(Double.parseDouble(priceText)));
+                    flight.setPrice(BigDecimal.valueOf(Double.parseDouble(priceText)));
                 } catch (NumberFormatException e) {
                     System.err.println("Failed to parse price: " + priceText);
                 }

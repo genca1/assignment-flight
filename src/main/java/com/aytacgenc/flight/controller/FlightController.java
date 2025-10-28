@@ -23,6 +23,38 @@ public class FlightController {
     @Autowired
     private FlightAggregationService flightService;
 
+    @PostMapping("/searchNormal")
+    public ResponseEntity<SearchFlightResponse> searchFlightsCheapest(@RequestBody SearchFlightRequest request) {
+
+        logger.info("Received flight search request: {} to {} on {}",
+                request.getDeparture(),
+                request.getArrival(),
+                request.getDepartureDate());
+
+        try {
+            List<Flight> flights = flightService.searchFlightsCheapest(request);
+
+            SearchFlightResponse response = new SearchFlightResponse(flights);
+
+            if (flights.isEmpty()) {
+                response.setErrorMessage("No flights found for the given criteria");
+                return ResponseEntity.ok(response);
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error processing flight search request", e);
+
+            SearchFlightResponse errorResponse = new SearchFlightResponse();
+            errorResponse.setErrorMessage("Error searching flights: " + e.getMessage());
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(errorResponse);
+        }
+    }
+
     @PostMapping("/search")
     public ResponseEntity<SearchFlightResponse> searchFlights(@RequestBody SearchFlightRequest request) {
 
@@ -32,7 +64,7 @@ public class FlightController {
                 request.getDepartureDate());
 
         try {
-            List<Flight> flights = flightService.searchFlights(request);
+            List<Flight> flights = flightService.searchFlightsNormal(request);
 
             SearchFlightResponse response = new SearchFlightResponse(flights);
 

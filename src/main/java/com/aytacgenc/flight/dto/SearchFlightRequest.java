@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 
 // SearchFlightRequest.java
 public class SearchFlightRequest {
+
+    private String flightNo;
     private String departure;
     private String arrival;
 
@@ -18,10 +20,11 @@ public class SearchFlightRequest {
     // Constructors
     public SearchFlightRequest() {}
 
-    public SearchFlightRequest(String departure, String arrival, LocalDateTime departureDate) {
+    public SearchFlightRequest(String flightNo, String departure, String arrival, LocalDateTime departureDate) {
         this.departure = departure;
         this.arrival = arrival;
         this.departureDate = departureDate;
+        this.flightNo = flightNo;
     }
 
     public SearchFlightRequest(SearchRequest searchRequest) {
@@ -29,6 +32,14 @@ public class SearchFlightRequest {
         this.departure = searchRequest.getDeparture();
         DateTimeConverter.toLocalDateTime(searchRequest.getDepartureDate());
         this.departureDate = DateTimeConverter.toLocalDateTime(searchRequest.getDepartureDate());
+    }
+
+    public String getFlightNo() {
+        return this.flightNo;
+    }
+
+    public void setFlightNo(String flightNo) {
+        this.flightNo = flightNo;
     }
 
     // Getters and setters

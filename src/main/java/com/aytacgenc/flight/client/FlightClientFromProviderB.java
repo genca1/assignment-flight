@@ -1,8 +1,10 @@
 package com.aytacgenc.flight.client;
 
 import com.aytacgenc.flight.config.SoapClientConfig;
+import com.aytacgenc.flight.dto.LogDTO;
 import com.aytacgenc.flight.dto.SearchFlightRequestB;
 import com.aytacgenc.flight.helper.DateTimeConverter;
+import com.aytacgenc.flight.service.LogService;
 import com.providerB.consumingwebservice.wsdl.Flight;
 import com.providerB.consumingwebservice.wsdl.SearchRequest;
 import jakarta.xml.bind.JAXBElement;
@@ -19,10 +21,12 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +41,9 @@ public class FlightClientFromProviderB extends WebServiceGatewaySupport {
     @Autowired
     private SoapClientConfig config;
 
+    @Autowired
+    private LogService logService;
+
     public List<Flight> getFlightsFromProviderB(SearchRequest searchRequest) throws Exception {
         QName qName = new QName("http://flightproviderb.service.com", "AvailabilitySearchRequest");
         SearchFlightRequestB searchFlightRequest = new SearchFlightRequestB(searchRequest);
@@ -49,12 +56,25 @@ public class FlightClientFromProviderB extends WebServiceGatewaySupport {
                     @Override
                     public void doWithMessage(WebServiceMessage message) throws IOException {
                         ((SoapMessage) message).setSoapAction("http://flightproviderb.service.com/AvailabilitySearchRequest");
+                        // marshal payload into the message
                         getWebServiceTemplate().getMarshaller().marshal(jaxbElement, message.getPayloadResult());
+
+                        // capture the outgoing SOAP request as String
+                        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                            message.writeTo(baos);
+                            baos.flush(); // Ensure all data is written
+                            String soapRequestXml = baos.toString(StandardCharsets.UTF_8.name());
+
+                            // save log
+                            LogDTO logRequest = new LogDTO("request", soapRequestXml, "http://flightproviderb.service.com");
+                            logService.saveLog(logRequest);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
-                },
-                new WebServiceMessageExtractor<String>() {
+                }, new WebServiceMessageExtractor<String>() {
                     @Override
-                    public String extractData(WebServiceMessage message) throws IOException, TransformerException {
+                    public String extractData(WebServiceMessage message) throws TransformerException {
                         StringWriter writer = new StringWriter();
                         TransformerFactory.newInstance().newTransformer().transform(
                                 message.getPayloadSource(),
@@ -65,7 +85,8 @@ public class FlightClientFromProviderB extends WebServiceGatewaySupport {
                 }
         );
 
-        System.out.println("Raw SOAP response: " + rawResponse);
+        LogDTO logDTOResponse = new LogDTO("response", rawResponse, "http://flightproviderb.service.com");
+        logService.saveLog(logDTOResponse);
 
         // Parse the response
         return parseFlightsFromXml(rawResponse);
@@ -113,7 +134,7 @@ public class FlightClientFromProviderB extends WebServiceGatewaySupport {
 
             if (priceText != null && !priceText.isEmpty()) {
                 try {
-                          flight.setPrice(BigDecimal.valueOf(Double.parseDouble(priceText)));
+                    flight.setPrice(BigDecimal.valueOf(Double.parseDouble(priceText)));
                 } catch (NumberFormatException e) {
                     System.err.println("Failed to parse price: " + priceText);
                 }
