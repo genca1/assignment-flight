@@ -2,10 +2,8 @@ package com.aytacgenc.flight.service;
 
 import com.aytacgenc.flight.client.FlightClientFromProviderA;
 import com.aytacgenc.flight.client.FlightClientFromProviderB;
-import com.aytacgenc.flight.dto.FlightDTO;
 import com.aytacgenc.flight.dto.SearchFlightRequest;
-import com.aytacgenc.flight.helper.DateTimeConverter;
-import com.providerA.consumingwebservice.wsdl.SearchRequest;
+import com.aytacgenc.flight.mapper.FlightRequestMapper;
 import com.providerB.consumingwebservice.wsdl.Flight;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,62 +34,44 @@ public class FlightAggregationService {
     @Autowired
     private FlightClientFromProviderB providerBClient;
 
+    @Autowired
+    private FlightRequestMapper flightRequestMapper;
+
     public List<Flight> searchFlightsNormal(SearchFlightRequest request) {
         Pattern pattern = Pattern.compile("^" + request.getFlightNo());
+        List<Flight> allFlights = getAllFlightsCombined(request);
 
-        Map<String, List<Flight>> allFlightsMap = getAllFlights(request);
-        List<Flight> allFlights = new ArrayList<>();
-
-        for (Map.Entry<String, List<Flight>> entry : allFlightsMap.entrySet()) {
-            allFlights.addAll(entry.getValue());
-        }
-
-        List<Flight> searchedFlights = new ArrayList<>();
-        for (Flight f : allFlights) {
-            Matcher matcher = pattern.matcher(f.getFlightNumber());
-            while (matcher.find()) {
-                searchedFlights.add(f);
-            }
-        }
-        return searchedFlights;
+        return allFlights.stream()
+                .filter(flight -> pattern.matcher(flight.getFlightNumber()).find())
+                .collect(Collectors.toList());
     }
 
     public List<Flight> searchFlightsCheapest(SearchFlightRequest request) {
         Pattern pattern = Pattern.compile("^" + request.getFlightNo());
-
         Map<String, List<Flight>> allFlightsMap = getAllFlights(request);
 
-        Map<String, List<Flight>> necessaryFlights = new HashMap<>();
+        Map<String, Flight> cheapestFlights = new HashMap<>();
 
-        for (Map.Entry<String, List<Flight>> entry : allFlightsMap.entrySet()) {
-            for (Flight flight : entry.getValue()) {
-                String flightNo = flight.getFlightNumber();
-                Matcher matcher = pattern.matcher(flightNo);
-                while (matcher.find()) {
-                    necessaryFlights.computeIfAbsent(entry.getKey(), k -> new ArrayList<>());
-                    necessaryFlights.get(entry.getKey()).add(flight);
-                }
-            }
-        }
-        return findCheapestFlights(necessaryFlights);
+        allFlightsMap.forEach((provider, flights) -> {
+            flights.stream()
+                    .filter(flight -> pattern.matcher(flight.getFlightNumber()).find())
+                    .forEach(flight -> {
+                        String flightNo = flight.getFlightNumber();
+                        Flight current = cheapestFlights.get(flightNo);
+                        if (current == null || flight.getPrice().compareTo(current.getPrice()) < 0) {
+                            cheapestFlights.put(flightNo, flight);
+                        }
+                    });
+        });
+
+        return new ArrayList<>(cheapestFlights.values());
     }
 
-    public List<Flight> findCheapestFlights(Map<String, List<Flight>> allFlightsMap) {
-        List<Flight> cheapestFlights = new ArrayList<>();
-        Map<String, Flight> cheapestByFlightNo = new HashMap<>();
-
-        for (Map.Entry<String, List<Flight>> entry : allFlightsMap.entrySet()) {
-            for (Flight flight : entry.getValue()) {
-                String flightNo = flight.getFlightNumber();
-                Flight current = cheapestByFlightNo.get(flightNo);
-                if (current == null || flight.getPrice().compareTo(current.getPrice()) < 0) {
-                    cheapestByFlightNo.put(flightNo, flight);
-                }
-            }
-        }
-
-        cheapestFlights.addAll(cheapestByFlightNo.values());
-        return cheapestFlights;
+    public List<Flight> getAllFlightsCombined(SearchFlightRequest request) {
+        Map<String, List<Flight>> allFlightsMap = getAllFlights(request);
+        return allFlightsMap.values().stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
     }
 
     public Map<String, List<Flight>> getAllFlights(SearchFlightRequest request) {
@@ -101,27 +81,8 @@ public class FlightAggregationService {
                 request.getDepartureDate());
 
         // Convert REST request to SOAP request format
-        String departureDateTimeStr = formatDateTime(request.getDepartureDate());
-
-        // Create requests for both providers
-        SearchRequest requestA = new SearchRequest();
-        requestA.setDeparture(request.getDeparture());
-        requestA.setArrival(request.getArrival());
-
-        XMLGregorianCalendar xmlGregorianCalendar =
-                DateTimeConverter.toXMLGregorianCalendar(LocalDateTime.parse(departureDateTimeStr));
-
-        requestA.setDepartureDate(xmlGregorianCalendar);
-
-        com.providerB.consumingwebservice.wsdl.SearchRequest requestB =
-                new com.providerB.consumingwebservice.wsdl.SearchRequest();
-        requestB.setDeparture(request.getDeparture());
-        requestB.setArrival(request.getArrival());
-
-        XMLGregorianCalendar xmlGregorianCalendarB =
-                DateTimeConverter.toXMLGregorianCalendar(LocalDateTime.parse(departureDateTimeStr));
-
-        requestB.setDepartureDate(xmlGregorianCalendarB);
+        com.providerA.consumingwebservice.wsdl.SearchRequest requestA = flightRequestMapper.toProviderARequest(request);
+        com.providerB.consumingwebservice.wsdl.SearchRequest requestB = flightRequestMapper.toProviderBRequest(request);
 
         // Call both providers in parallel
         CompletableFuture<List<Flight>> futureA = CompletableFuture.supplyAsync(() -> {
@@ -154,9 +115,5 @@ public class FlightAggregationService {
             logger.error("Error aggregating flight results", e);
             return new HashMap<>();
         }
-    }
-
-    private String formatDateTime(LocalDateTime dateTime) {
-        return dateTime.format(DATETIME_FORMATTER);
     }
 }

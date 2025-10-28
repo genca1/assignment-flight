@@ -1,15 +1,10 @@
 package com.aytacgenc.flight.dto;
 
-import com.aytacgenc.flight.helper.DateTimeConverter;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.providerB.consumingwebservice.wsdl.SearchRequest;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-// SearchFlightRequest.java
 public class SearchFlightRequest {
-
     private String flightNo;
     private String departure;
     private String arrival;
@@ -21,34 +16,20 @@ public class SearchFlightRequest {
     public SearchFlightRequest() {}
 
     public SearchFlightRequest(String flightNo, String departure, String arrival, LocalDateTime departureDate) {
+        this.flightNo = flightNo;
         this.departure = departure;
         this.arrival = arrival;
         this.departureDate = departureDate;
-        this.flightNo = flightNo;
     }
 
-    public SearchFlightRequest(SearchRequest searchRequest) {
-        this.arrival = searchRequest.getArrival();
-        this.departure = searchRequest.getDeparture();
-        DateTimeConverter.toLocalDateTime(searchRequest.getDepartureDate());
-        this.departureDate = DateTimeConverter.toLocalDateTime(searchRequest.getDepartureDate());
-    }
-
-    public String getFlightNo() {
-        return this.flightNo;
-    }
-
-    public void setFlightNo(String flightNo) {
-        this.flightNo = flightNo;
-    }
-
-    // Getters and setters
+    // Getters and setters only (remove the SearchRequest constructor)
+    public String getFlightNo() { return flightNo; }
+    public void setFlightNo(String flightNo) { this.flightNo = flightNo; }
     public String getDeparture() { return departure; }
     public void setDeparture(String departure) { this.departure = departure; }
-
     public String getArrival() { return arrival; }
     public void setArrival(String arrival) { this.arrival = arrival; }
-
     public LocalDateTime getDepartureDate() { return departureDate; }
     public void setDepartureDate(LocalDateTime departureDate) { this.departureDate = departureDate; }
 }
+

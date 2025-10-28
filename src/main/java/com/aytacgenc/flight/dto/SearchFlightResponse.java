@@ -16,63 +16,34 @@ import java.util.List;
         "errorMessage"
 })
 public class SearchFlightResponse {
+    private boolean hasError;
+    private List<Flight> flights = new ArrayList<>();
+    private String errorMessage;
 
-    @XmlElement(namespace = "http://flightproviderb.service.com")
-    protected boolean hasError;
-
-    // Remove namespace to allow inheritance from parent
-    @XmlElement(name = "flight")
-    protected List<Flight> flight = new ArrayList<>();
-
-    @XmlElement(namespace = "http://flightproviderb.service.com")
-    protected String errorMessage;
-
-    public SearchFlightResponse() {
-    }
+    public SearchFlightResponse() {}
 
     public SearchFlightResponse(List<Flight> flights) {
-        this.flight = flights;
+        this.flights = flights != null ? flights : new ArrayList<>();
+        this.hasError = false;
     }
 
-    public SearchResult toSearchResult() {
-        SearchResult result = new SearchResult();
-        result.setHasError(this.hasError);
-        result.setErrorMessage(this.errorMessage);
-
-        if (this.flight != null) {
-            for (Flight customFlight : this.flight) {
-                Flight flight = new Flight();
-                flight.setFlightNumber(customFlight.getFlightNumber());
-                flight.setDeparture(customFlight.getDeparture());
-                flight.setArrival(customFlight.getArrival());
-                result.getFlightOptions().add(flight);
-            }
-        }
-        return result;
+    public SearchFlightResponse(String errorMessage) {
+        this.hasError = true;
+        this.errorMessage = errorMessage;
+        this.flights = new ArrayList<>();
     }
 
-    public boolean isHasError() {
-        return this.hasError;
+    // Getters and setters
+    public boolean isHasError() { return hasError; }
+    public void setHasError(boolean hasError) { this.hasError = hasError; }
+
+    public List<Flight> getFlight() { return flights; }
+    public void setFlight(List<Flight> flights) { this.flights = flights; }
+
+    public String getErrorMessage() { return errorMessage; }
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+        this.hasError = errorMessage != null && !errorMessage.trim().isEmpty();
     }
-
-    public void setHasError(boolean value) {
-        this.hasError = value;
-    }
-
-    public List<Flight> getFlight() {
-        if (this.flight == null) {
-            this.flight = new ArrayList();
-        }
-
-        return this.flight;
-    }
-
-    public String getErrorMessage() {
-        return this.errorMessage;
-    }
-
-    public void setErrorMessage(String value) {
-        this.errorMessage = value;
-    }
-
 }
+
