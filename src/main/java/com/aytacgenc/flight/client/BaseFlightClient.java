@@ -40,7 +40,15 @@ public abstract class BaseFlightClient extends WebServiceGatewaySupport {
 
         @Override
         public R extractData(WebServiceMessage message) throws IOException, TransformerException {
-            // Let JAXB automatically unmarshal the response
+            // Capture SOAP Response as XML string
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            message.writeTo(baos);
+            String soapResponseXml = baos.toString(StandardCharsets.UTF_8);
+
+            // Save the raw XML
+            logService.saveLog(new LogDTO("response", soapResponseXml, "someUrlOrProvider"));
+
+            // Unmarshal the response normally
             Object response = getWebServiceTemplate().getUnmarshaller().unmarshal(message.getPayloadSource());
             if (response instanceof JAXBElement<?>) {
                 return ((JAXBElement<R>) response).getValue();

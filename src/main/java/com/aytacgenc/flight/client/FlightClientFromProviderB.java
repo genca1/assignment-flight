@@ -20,8 +20,6 @@ public class FlightClientFromProviderB extends BaseFlightClient {
         QName qName = new QName("http://flightproviderb.service.com", "AvailabilitySearchRequest");
         JAXBElement<SearchRequest> jaxbElement = new JAXBElement<>(qName, SearchRequest.class, searchRequest);
         SearchResult response = sendSoapRequest(ENDPOINT, SOAP_ACTION, jaxbElement, SearchResult.class, PROVIDER);
-        LogDTO logDTOResponse = new LogDTO("response", response.toString(), PROVIDER);
-        logService.saveLog(logDTOResponse);
         return response.getFlightOptions();
     }
 }

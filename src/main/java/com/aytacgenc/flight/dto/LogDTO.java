@@ -13,7 +13,6 @@ public class LogDTO {
     private LocalDateTime logTime;
     private String type;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String body;
 

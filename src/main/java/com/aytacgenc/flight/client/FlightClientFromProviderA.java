@@ -26,8 +26,6 @@ public class FlightClientFromProviderA extends BaseFlightClient {
         QName qName = new QName("http://flightprovidera.service.com", "AvailabilitySearchRequest");
         JAXBElement<SearchRequest> jaxbElement = new JAXBElement<>(qName, SearchRequest.class, searchRequest);
         SearchResult response = sendSoapRequest(ENDPOINT, SOAP_ACTION, jaxbElement, SearchResult.class, PROVIDER);
-        LogDTO logDTOResponse = new LogDTO("response", response.toString(), PROVIDER);
-        logService.saveLog(logDTOResponse);
         List<Flight> flightResponse = new ArrayList<>();
         for (com.providerA.consumingwebservice.wsdl.Flight f : response.getFlightOptions()) {
             flightResponse.add(flightRequestMapper.mapFlight(f));
