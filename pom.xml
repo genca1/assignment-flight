@@ -14,18 +14,6 @@
 	<name>flight</name>
 	<description>Assignment</description>
 	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
@@ -123,7 +111,7 @@
 					<configuration>
 						<packageName>com.providerA.consumingwebservice.wsdl</packageName>
 						<wsdlUrls>
-							<wsdlUrl>http://localhost:8082/ws/flightProviderA.wsdl</wsdlUrl>
+							<wsdlUrl>https://assignment-providera-production.up.railway.app/ws/flightProviderA.wsdl</wsdlUrl>
 						</wsdlUrls>
 						<sourceDestDir>${sourcesDir}</sourceDestDir>
 						<destDir>${classesDir}</destDir>
@@ -138,7 +126,7 @@
 						<configuration>
 							<packageName>com.providerB.consumingwebservice.wsdl</packageName>
 							<wsdlUrls>
-								<wsdlUrl>http://localhost:8083/ws/flightProviderB.wsdl</wsdlUrl>
+								<wsdlUrl>https://assignment-providerb-production.up.railway.app/ws/flightProviderB.wsdl</wsdlUrl>
 							</wsdlUrls>
 							<sourceDestDir>${sourcesDir}</sourceDestDir>
 							<destDir>${classesDir}</destDir>

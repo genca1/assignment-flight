@@ -86,9 +86,4 @@ public class FlightController {
                     .body(errorResponse);
         }
     }
-
-    @GetMapping("/health")
-    public ResponseEntity<String> healthCheck() {
-        return ResponseEntity.ok("Flight service is running");
-    }
 }

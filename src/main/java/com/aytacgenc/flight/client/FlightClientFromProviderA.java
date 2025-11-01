@@ -1,34 +1,37 @@
 package com.aytacgenc.flight.client;
 
 import com.aytacgenc.flight.dto.LogDTO;
-import com.aytacgenc.flight.dto.SearchFlightRequestA;
+import com.aytacgenc.flight.mapper.FlightRequestMapper;
+import com.providerA.consumingwebservice.wsdl.SearchResult;
 import com.providerB.consumingwebservice.wsdl.Flight;
 import com.providerA.consumingwebservice.wsdl.SearchRequest;
 import jakarta.xml.bind.JAXBElement;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import javax.xml.namespace.QName;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class FlightClientFromProviderA extends BaseFlightClient {
 
-    private static final String ENDPOINT = "http://localhost:8082/ws";
+    private static final String ENDPOINT = "https://assignment-providera-production.up.railway.app/ws";
     private static final String SOAP_ACTION = "http://flightprovidera.service.com/AvailabilitySearchRequest";
     private static final String PROVIDER = "http://flightprovidera.service.com";
-    private static final FlightParserConfig PARSER_CONFIG =
-            new FlightParserConfig("flightNo", "origin", "destination");
 
-    public List<Flight> getFlightsFromProviderA(SearchRequest searchRequest) throws Exception {
+    @Autowired
+    private FlightRequestMapper flightRequestMapper;
+
+    public List<Flight> getFlightsFromProviderA(SearchRequest searchRequest) {
         QName qName = new QName("http://flightprovidera.service.com", "AvailabilitySearchRequest");
-        SearchFlightRequestA searchFlightRequest = new SearchFlightRequestA(searchRequest);
-        JAXBElement<SearchFlightRequestA> jaxbElement =
-                new JAXBElement<>(qName, SearchFlightRequestA.class, searchFlightRequest);
-
-        String rawResponse = sendSoapRequest(ENDPOINT, SOAP_ACTION, jaxbElement, PROVIDER);
-
-        LogDTO logDTOResponse = new LogDTO("response", rawResponse, PROVIDER);
+        JAXBElement<SearchRequest> jaxbElement = new JAXBElement<>(qName, SearchRequest.class, searchRequest);
+        SearchResult response = sendSoapRequest(ENDPOINT, SOAP_ACTION, jaxbElement, SearchResult.class, PROVIDER);
+        LogDTO logDTOResponse = new LogDTO("response", response.toString(), PROVIDER);
         logService.saveLog(logDTOResponse);
-
-        return parseFlightsFromXml(rawResponse, PARSER_CONFIG);
+        List<Flight> flightResponse = new ArrayList<>();
+        for (com.providerA.consumingwebservice.wsdl.Flight f : response.getFlightOptions()) {
+            flightResponse.add(flightRequestMapper.mapFlight(f));
+        }
+        return flightResponse;
     }
 }

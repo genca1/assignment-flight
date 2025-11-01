@@ -21,6 +21,18 @@ public class FlightRequestMapper {
         return soapRequest;
     }
 
+    public com.providerB.consumingwebservice.wsdl.Flight mapFlight(com.providerA.consumingwebservice.wsdl.Flight flightA) {
+        com.providerB.consumingwebservice.wsdl.Flight flightB = new com.providerB.consumingwebservice.wsdl.Flight();
+        flightB.setFlightNumber(flightA.getFlightNumber());
+        flightB.setDeparture(flightA.getDeparture());
+        flightB.setArrival(flightA.getArrival());
+        flightB.setDeparturedatetime(flightA.getDeparturedatetime());
+        flightB.setArrivaldatetime(flightA.getArrivaldatetime());
+        flightB.setPrice(flightA.getPrice());
+        return flightB;
+    }
+
+
     private void mapCommonFields(SearchFlightRequest source, Object target) {
         // Convert date once
         XMLGregorianCalendar xmlDate = DateTimeConverter.toXMLGregorianCalendar(source.getDepartureDate());

@@ -14,7 +14,6 @@ public class SoapClientConfig {
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
 
         marshaller.setClassesToBeBound(
-                com.aytacgenc.flight.dto.SearchFlightRequestA.class,
                 com.providerA.consumingwebservice.wsdl.SearchRequest.class, // Add root types from generated code
                 com.providerA.consumingwebservice.wsdl.ObjectFactory.class  // Often necessary for generated code
         );
@@ -25,7 +24,6 @@ public class SoapClientConfig {
     public Jaxb2Marshaller providerBMarshaller() {
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
         marshaller.setClassesToBeBound(
-                com.aytacgenc.flight.dto.SearchFlightRequestB.class,
                 com.providerB.consumingwebservice.wsdl.SearchRequest.class, // Add root types from generated code
                 com.providerB.consumingwebservice.wsdl.ObjectFactory.class  // Often necessary for generated code
         );
