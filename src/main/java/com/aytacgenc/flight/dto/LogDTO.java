@@ -1,10 +1,14 @@
 package com.aytacgenc.flight.dto;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@Setter
 public class LogDTO {
 
     @Id
@@ -18,50 +22,10 @@ public class LogDTO {
 
     private String url;
 
-    public LogDTO() {}
-
-    public LogDTO(String type, String body, String url) {
-        this.logTime = LocalDateTime.now();
-        this.type = type;
-        this.body = body;
-        this.url = url;
+    public LogDTO(String response, String soapResponseXml, String someUrlOrProvider) {
+        this.type = response;
+        this.body = soapResponseXml;
+        this.url = someUrlOrProvider;
     }
-    // Getters
-    public Long getId() {
-        return id;
-    }
-
-    public LocalDateTime getLogTime() {
-        return logTime;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getBody() {
-        return body;
-    }
-
-    public String getUrl() { return this.url;  }
-
-    // Setters
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setLogTime(LocalDateTime logTime) {
-        this.logTime = logTime;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public void setBody(String body) {
-        this.body = body;
-    }
-
-    public void setUrl(String url) { this.url = url; }
 }
 

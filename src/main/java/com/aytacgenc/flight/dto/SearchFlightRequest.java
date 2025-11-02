@@ -1,7 +1,6 @@
 package com.aytacgenc.flight.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-
 import java.time.LocalDateTime;
 
 public class SearchFlightRequest {

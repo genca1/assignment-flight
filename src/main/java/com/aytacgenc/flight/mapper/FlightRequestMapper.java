@@ -1,10 +1,14 @@
 package com.aytacgenc.flight.mapper;
 
+import com.aytacgenc.flight.dto.FlightDTO;
 import com.aytacgenc.flight.dto.SearchFlightRequest;
 import com.aytacgenc.flight.helper.DateTimeConverter;
+import com.providerA.consumingwebservice.wsdl.Flight;
 import org.springframework.stereotype.Component;
 
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class FlightRequestMapper {
@@ -21,15 +25,35 @@ public class FlightRequestMapper {
         return soapRequest;
     }
 
-    public com.providerB.consumingwebservice.wsdl.Flight mapFlight(com.providerA.consumingwebservice.wsdl.Flight flightA) {
-        com.providerB.consumingwebservice.wsdl.Flight flightB = new com.providerB.consumingwebservice.wsdl.Flight();
-        flightB.setFlightNumber(flightA.getFlightNumber());
-        flightB.setDeparture(flightA.getDeparture());
-        flightB.setArrival(flightA.getArrival());
-        flightB.setDeparturedatetime(flightA.getDeparturedatetime());
-        flightB.setArrivaldatetime(flightA.getArrivaldatetime());
-        flightB.setPrice(flightA.getPrice());
-        return flightB;
+    public List<FlightDTO> mapListFlightDTO (List<?> flightObjectList) {
+        List<FlightDTO> flightDTOS = new ArrayList<>();
+        for (Object f: flightObjectList) {
+            flightDTOS.add(mapFlightDTO(f));
+        }
+
+        return flightDTOS;
+    }
+
+    public FlightDTO mapFlightDTO(Object flightObject) {
+        FlightDTO flightDTO = new FlightDTO();
+        if (flightObject instanceof Flight flight) {
+            flightDTO.setFlightNumber(flight.getFlightNumber());
+            flightDTO.setArrival(flight.getArrival());
+            flightDTO.setDeparture(flight.getDeparture());
+            flightDTO.setArrivaldatetime(flight.getArrivaldatetime());
+            flightDTO.setDeparturedatetime(flight.getDeparturedatetime());
+            flightDTO.setPrice(flight.getPrice());
+            flightDTO.setProvider("ProviderA");
+        } else if (flightObject instanceof com.providerB.consumingwebservice.wsdl.Flight flight) {
+            flightDTO.setFlightNumber(flight.getFlightNumber());
+            flightDTO.setArrival(flight.getArrival());
+            flightDTO.setDeparture(flight.getDeparture());
+            flightDTO.setArrivaldatetime(flight.getArrivaldatetime());
+            flightDTO.setDeparturedatetime(flight.getDeparturedatetime());
+            flightDTO.setPrice(flight.getPrice());
+            flightDTO.setProvider("ProviderB");
+        }
+        return flightDTO;
     }
 
 

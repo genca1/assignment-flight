@@ -1,10 +1,6 @@
 package com.aytacgenc.flight.dto;
 
-
-import com.providerB.consumingwebservice.wsdl.SearchResult;
-import com.providerB.consumingwebservice.wsdl.Flight;
 import jakarta.xml.bind.annotation.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,12 +13,12 @@ import java.util.List;
 })
 public class SearchFlightResponse {
     private boolean hasError;
-    private List<Flight> flights = new ArrayList<>();
+    private List<FlightDTO> flights = new ArrayList<>();
     private String errorMessage;
 
     public SearchFlightResponse() {}
 
-    public SearchFlightResponse(List<Flight> flights) {
+    public SearchFlightResponse(List<FlightDTO> flights) {
         this.flights = flights != null ? flights : new ArrayList<>();
         this.hasError = false;
     }
@@ -37,8 +33,8 @@ public class SearchFlightResponse {
     public boolean isHasError() { return hasError; }
     public void setHasError(boolean hasError) { this.hasError = hasError; }
 
-    public List<Flight> getFlight() { return flights; }
-    public void setFlight(List<Flight> flights) { this.flights = flights; }
+    public List<FlightDTO> getFlight() { return flights; }
+    public void setFlight(List<FlightDTO> flights) { this.flights = flights; }
 
     public String getErrorMessage() { return errorMessage; }
     public void setErrorMessage(String errorMessage) {
