@@ -3,7 +3,7 @@ package com.aytacgenc.flight.controller;
 import com.aytacgenc.flight.dto.FlightDTO;
 import com.aytacgenc.flight.dto.SearchFlightRequest;
 import com.aytacgenc.flight.dto.SearchFlightResponse;
-import com.aytacgenc.flight.service.FlightAggregationService;
+import com.aytacgenc.flight.service.FlightService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FlightController {
 
-    private final FlightAggregationService flightService;
+    private final FlightService flightService;
 
     @GetMapping("/search-cheap/{departure}/{arrival}/{departureDate}/{flightNo}")
     public ResponseEntity<SearchFlightResponse> searchFlightsCheapest(@PathVariable String departure,

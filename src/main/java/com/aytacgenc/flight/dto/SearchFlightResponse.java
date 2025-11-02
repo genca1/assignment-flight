@@ -1,16 +1,8 @@
 package com.aytacgenc.flight.dto;
 
-import jakarta.xml.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@XmlRootElement(name = "AvailabilitySearchResponse", namespace = "http://flightproviderb.service.com")
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "AvailabilitySearchResponse", propOrder = {
-        "hasError",
-        "flight",
-        "errorMessage"
-})
 public class SearchFlightResponse {
     private boolean hasError;
     private List<FlightDTO> flights = new ArrayList<>();
@@ -42,4 +34,3 @@ public class SearchFlightResponse {
         this.hasError = errorMessage != null && !errorMessage.trim().isEmpty();
     }
 }
-

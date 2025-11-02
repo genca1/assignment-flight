@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,36 +26,6 @@ public class FlightAggregationService {
     private final FlightClientFromProviderB providerBClient;
     private final FlightRequestMapper flightRequestMapper;
 
-    public List<FlightDTO> searchFlightsNormal(SearchFlightRequest request) {
-        Pattern pattern = Pattern.compile("^" + request.getFlightNo());
-        List<FlightDTO> allFlights = getAllFlightsCombined(request);
-
-        return allFlights.stream()
-                .filter(flight -> pattern.matcher(flight.getFlightNumber()).find())
-                .collect(Collectors.toList());
-    }
-
-    public List<FlightDTO> searchFlightsCheapest(SearchFlightRequest request) {
-        Pattern pattern = Pattern.compile("^" + request.getFlightNo());
-        Map<String, List<FlightDTO>> allFlightsMap = getAllFlights(request);
-
-        Map<String, FlightDTO> cheapestFlights = new HashMap<>();
-
-        allFlightsMap.forEach((provider, flights) -> {
-            flights.stream()
-                    .filter(flight -> pattern.matcher(flight.getFlightNumber()).find())
-                    .forEach(flight -> {
-                        String flightNo = flight.getFlightNumber();
-                        FlightDTO current = cheapestFlights.get(flightNo);
-                        if (current == null || flight.getPrice().compareTo(current.getPrice()) < 0) {
-                            cheapestFlights.put(flightNo, flight);
-                        }
-                    });
-        });
-
-        return new ArrayList<>(cheapestFlights.values());
-    }
-
     public List<FlightDTO> getAllFlightsCombined(SearchFlightRequest request) {
         Map<String, List<FlightDTO>> allFlightsMap = getAllFlights(request);
         return allFlightsMap.values().stream()
@@ -65,16 +34,10 @@ public class FlightAggregationService {
     }
 
     public Map<String, List<FlightDTO>> getAllFlights(SearchFlightRequest request) {
-        logger.info("Searching flights from {} to {} on {}",
-                request.getDeparture(),
-                request.getArrival(),
-                request.getDepartureDate());
-
         // Convert REST request to SOAP request format
         com.providerA.consumingwebservice.wsdl.SearchRequest requestA = flightRequestMapper.toProviderARequest(request);
         com.providerB.consumingwebservice.wsdl.SearchRequest requestB = flightRequestMapper.toProviderBRequest(request);
 
-        // Call both providers in parallel
         CompletableFuture<List<FlightDTO>> futureA = CompletableFuture.supplyAsync(() -> {
             List<FlightDTO> flightsA = new ArrayList<>();
             try {
@@ -95,7 +58,6 @@ public class FlightAggregationService {
             return flightsB;
         });
 
-        // Wait for both to complete and combine results
         try {
             Map<String, List<FlightDTO>> allFlights = new HashMap<>();
             allFlights.put("providerA", futureA.get());
