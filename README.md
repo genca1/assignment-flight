@@ -12,7 +12,7 @@ This project gathers tickets from two different clients and aggregtes tickets fr
 #### Tüm biletleri getir
 
 ```http
-  POST /api/flights/search
+  GET /api/flights/search/{departure}/{arrival}/{departureDate}/{flightNo}
 ```
 
 | Parametre | Tip     | Açıklama                |
@@ -25,7 +25,7 @@ This project gathers tickets from two different clients and aggregtes tickets fr
 #### Normalize edilmiş şekilde (her uçuştan en ucuz olan) sonuçları getir
 
 ```http
-  POST /api/flights/searchNormal
+  GET /api/flights/search-cheap/{departure}/{arrival}/{departureDate}/{flightNo}
 ```
 
 | Parametre | Tip     | Açıklama                |

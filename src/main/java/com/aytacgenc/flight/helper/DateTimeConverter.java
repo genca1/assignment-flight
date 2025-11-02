@@ -10,7 +10,7 @@ import java.util.GregorianCalendar;
 
 public class DateTimeConverter {
 
-    private static DatatypeFactory datatypeFactory;
+    private static final DatatypeFactory datatypeFactory;
 
     static {
         try {
@@ -39,38 +39,5 @@ public class DateTimeConverter {
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert LocalDateTime to XMLGregorianCalendar", e);
         }
-    }
-
-    /**
-     * Converts XMLGregorianCalendar to LocalDateTime
-     *
-     * @param xmlCalendar XMLGregorianCalendar to convert
-     * @return LocalDateTime or null if input is null
-     */
-    public static LocalDateTime toLocalDateTime(XMLGregorianCalendar xmlCalendar) {
-        if (xmlCalendar == null) {
-            return null;
-        }
-
-        try {
-            return xmlCalendar.toGregorianCalendar()
-                    .toZonedDateTime()
-                    .toLocalDateTime();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to convert XMLGregorianCalendar to LocalDateTime", e);
-        }
-    }
-
-    /**
-     * Converts XMLGregorianCalendar to String in ISO format
-     *
-     * @param xmlCalendar XMLGregorianCalendar to convert
-     * @return String representation or null if input is null
-     */
-    public static String xmlCalendarToString(XMLGregorianCalendar xmlCalendar) {
-        if (xmlCalendar == null) {
-            return null;
-        }
-        return xmlCalendar.toString();
     }
 }

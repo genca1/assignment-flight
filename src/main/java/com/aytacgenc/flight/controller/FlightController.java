@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -18,17 +19,22 @@ public class FlightController {
 
     private final FlightAggregationService flightService;
 
-    @PostMapping("/searchNormal")
-    public ResponseEntity<SearchFlightResponse> searchFlightsCheapest(@RequestBody SearchFlightRequest request) {
-
-        List<FlightDTO> flights = flightService.searchFlightsCheapest(request);
+    @GetMapping("/search-cheap/{departure}/{arrival}/{departureDate}/{flightNo}")
+    public ResponseEntity<SearchFlightResponse> searchFlightsCheapest(@PathVariable String departure,
+                                                                      @PathVariable String arrival,
+                                                                      @PathVariable LocalDateTime departureDate,
+                                                                      @PathVariable String flightNo) {
+        List<FlightDTO> flights = flightService.searchFlightsCheapest(new SearchFlightRequest(flightNo, departure, arrival, departureDate));
         SearchFlightResponse response = new SearchFlightResponse(flights);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/search")
-    public ResponseEntity<SearchFlightResponse> searchFlights(@RequestBody SearchFlightRequest request) {
-        List<FlightDTO> flights = flightService.searchFlightsNormal(request);
+    @GetMapping("/search/{departure}/{arrival}/{departureDate}/{flightNo}")
+    public ResponseEntity<SearchFlightResponse> searchFlights(@PathVariable String departure,
+                                                              @PathVariable String arrival,
+                                                              @PathVariable LocalDateTime departureDate,
+                                                              @PathVariable String flightNo) {
+        List<FlightDTO> flights = flightService.searchFlightsNormal(new SearchFlightRequest(flightNo, departure, arrival, departureDate));
         SearchFlightResponse response = new SearchFlightResponse(flights);
         return ResponseEntity.ok(response);
     }
